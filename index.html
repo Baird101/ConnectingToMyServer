@@ -1,54 +1,117 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>WebSocket Test</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        #status {
+            font-size: 24px;
+            margin: 20px;
+        }
+
+        #messages {
+            width: 500px;
+            min-height: 150px;
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #999;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        input {
+            padding: 10px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px 20px;
+        }
+    </style>
 </head>
 
 <body>
-    <h2>Node Server Test</h2>
 
-    <p id="status">Connecting...</p>
+    <h1>Relay Server Test</h1>
 
-    <input id="message" type="text" placeholder="Message">
+    <div id="status">Connecting...</div>
+
+    <div id="messages"></div>
+
+    <input id="messageInput" type="text" placeholder="Message">
     <button onclick="sendMessage()">Send</button>
 
-    <pre id="output"></pre>
-
     <script>
-        var socket = new WebSocket("ws://217.154.36.84:6404");
+        var socket = new WebSocket('ws://78.154.103.44:10402');
 
         socket.onopen = function() {
-            document.getElementById("status").textContent = "Connected!";
-            addMessage("Connected to server.");
+            document.getElementById('status').textContent = 'Connected!';
+
+            addMessage('Connected to relay server.');
+
+            socket.send(JSON.stringify({
+                type: 'hello',
+                name: 'DebugRanger'
+            }));
         };
 
         socket.onmessage = function(event) {
-            addMessage("Server: " + event.data);
+            addMessage('Server: ' + event.data);
         };
 
         socket.onclose = function() {
-            document.getElementById("status").textContent = "Disconnected";
-            addMessage("Disconnected from server.");
+            document.getElementById('status').textContent = 'Disconnected';
+
+            addMessage('Disconnected from server.');
         };
 
         socket.onerror = function(error) {
-            document.getElementById("status").textContent = "Connection error";
-            addMessage("WebSocket error.");
+            document.getElementById('status').textContent = 'Connection error';
+
+            addMessage('WebSocket error.');
             console.log(error);
         };
 
         function sendMessage() {
-            var message = document.getElementById("message").value;
+            var input = document.getElementById('messageInput');
+            var message = input.value;
 
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(message);
-                document.getElementById("message").value = "";
+            if (message === '') {
+                return;
             }
+
+            if (socket.readyState !== WebSocket.OPEN) {
+                addMessage('Not connected to server.');
+                return;
+            }
+
+            socket.send(JSON.stringify({
+                type: 'chat_send',
+                room: 'main',
+                name: 'DebugRanger',
+                text: message
+            }));
+
+            addMessage('You: ' + message);
+
+            input.value = '';
         }
 
         function addMessage(message) {
-            document.getElementById("output").textContent += message + "\n";
+            var messages = document.getElementById('messages');
+
+            messages.textContent += message + '\n';
         }
     </script>
+
 </body>
 </html>
+```
