@@ -15,11 +15,10 @@
     <pre id="output"></pre>
 
     <script>
-        var socket = new WebSocket("ws://217.154.36.84:6759");
+        var socket = new WebSocket("ws://217.154.36.84:6404");
 
         socket.onopen = function() {
             document.getElementById("status").textContent = "Connected!";
-
             addMessage("Connected to server.");
         };
 
@@ -29,13 +28,11 @@
 
         socket.onclose = function() {
             document.getElementById("status").textContent = "Disconnected";
-
             addMessage("Disconnected from server.");
         };
 
         socket.onerror = function(error) {
             document.getElementById("status").textContent = "Connection error";
-
             addMessage("WebSocket error.");
             console.log(error);
         };
@@ -45,9 +42,6 @@
 
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(message);
-
-                addMessage("You: " + message);
-
                 document.getElementById("message").value = "";
             }
         }
