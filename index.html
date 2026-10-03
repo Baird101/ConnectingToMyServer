@@ -1,128 +1,57 @@
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>WebSocket Test</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        #status {
-            font-size: 24px;
-            margin: 20px;
-        }
-
-        #messages {
-            width: 400px;
-            height: 200px;
-            border: 1px solid black;
-            margin: 20px auto;
-            padding: 10px;
-            text-align: left;
-            overflow-y: auto;
-        }
-
-        input {
-            padding: 8px;
-            width: 280px;
-        }
-
-        button {
-            padding: 8px 15px;
-        }
-    </style>
 </head>
 
 <body>
-
     <h1>WebSocket Test</h1>
 
-    <div id="status">Connecting...</div>
+    <p id="status">Connecting...</p>
 
-    <div id="messages"></div>
+    <button onclick="test()">Test Connection</button>
 
-    <input id="messageInput" type="text" placeholder="Type a message">
-
-    <button onclick="sendMessage()">Send</button>
+    <pre id="output"></pre>
 
     <script>
+        var status = document.getElementById('status');
+        var output = document.getElementById('output');
+
         var socket = new WebSocket('wss://tester.wispbyte.org');
 
-        var status = document.getElementById('status');
-        var messages = document.getElementById('messages');
-        var messageInput = document.getElementById('messageInput');
-
         socket.onopen = function() {
-            status.textContent = 'Connected!';
-            status.style.color = 'green';
+            status.textContent = 'CONNECTED';
+            output.textContent += 'WebSocket connected!\n';
 
-            addMessage('Connected to server.');
-
-            socket.send(JSON.stringify({
-                type: 'hello',
-                name: 'Test'
-            }));
+            socket.send('Hello from GitHub Pages!');
         };
 
         socket.onmessage = function(event) {
-            addMessage('Server: ' + event.data);
+            output.textContent += 'Server: ' + event.data + '\n';
         };
 
-        socket.onclose = function() {
-            status.textContent = 'Disconnected';
-            status.style.color = 'red';
+        socket.onerror = function(event) {
+            status.textContent = 'ERROR';
+            output.textContent += 'WebSocket error\n';
 
-            addMessage('Disconnected from server.');
+            console.log('WebSocket error:', event);
         };
 
-        socket.onerror = function(error) {
-            status.textContent = 'Connection Error';
-            status.style.color = 'red';
+        socket.onclose = function(event) {
+            status.textContent = 'CLOSED';
+            output.textContent += 'Closed. Code: ' + event.code + '\n';
 
-            addMessage('WebSocket error.');
-            console.log(error);
+            console.log('Close event:', event);
         };
 
-        function sendMessage() {
-            if (socket.readyState !== WebSocket.OPEN) {
-                addMessage('Not connected to server.');
-                return;
+        function test() {
+            output.textContent += 'Ready state: ' + socket.readyState + '\n';
+
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send('Button test');
             }
-
-            var message = messageInput.value;
-
-            if (message === '') {
-                return;
-            }
-
-            socket.send(JSON.stringify({
-                type: 'chat',
-                name: 'Test',
-                text: message
-            }));
-
-            addMessage('You: ' + message);
-
-            messageInput.value = '';
         }
-
-        function addMessage(message) {
-            var div = document.createElement('div');
-            div.textContent = message;
-
-            messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        messageInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        });
     </script>
-
 </body>
 </html>
