@@ -15,43 +15,47 @@
     <pre id="output"></pre>
 
     <script>
-        var status = document.getElementById('status');
-        var output = document.getElementById('output');
-
-        var socket = new WebSocket('wss://tester.wispbyte.org');
-
-        socket.onopen = function() {
-            status.textContent = 'CONNECTED';
-            output.textContent += 'WebSocket connected!\n';
-
-            socket.send('Hello from GitHub Pages!');
-        };
-
-        socket.onmessage = function(event) {
-            output.textContent += 'Server: ' + event.data + '\n';
-        };
-
-        socket.onerror = function(event) {
-            status.textContent = 'ERROR';
-            output.textContent += 'WebSocket error\n';
-
-            console.log('WebSocket error:', event);
-        };
-
-        socket.onclose = function(event) {
-            status.textContent = 'CLOSED';
-            output.textContent += 'Closed. Code: ' + event.code + '\n';
-
-            console.log('Close event:', event);
-        };
-
-        function test() {
-            output.textContent += 'Ready state: ' + socket.readyState + '\n';
-
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send('Button test');
+        var socket = null;
+        
+        function connectToServer() {
+            socket = new WebSocket("wss://tester.wispbyte.org");
+        
+            socket.onopen = function() {
+                console.log("Connected to relay server!");
+        
+                socket.send(JSON.stringify({
+                    type: "join",
+                    room: "main"
+                }));
+            };
+        
+            socket.onmessage = function(event) {
+                var message = JSON.parse(event.data);
+        
+                console.log("Received:", message);
+        
+                if (message.type === "connected") {
+                    console.log("WebSocket connection established.");
+                }
+            };
+        
+            socket.onclose = function() {
+                console.log("Disconnected from relay server.");
+                socket = null;
+            };
+        
+            socket.onerror = function(error) {
+                console.log("WebSocket error:", error);
+            };
+        }
+        
+        function sendMessage(message) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
             }
         }
+        
+        connectToServer();
     </script>
 </body>
 </html>
