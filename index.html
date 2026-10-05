@@ -11,35 +11,6 @@
 <button id="increase">Increase Counter</button>
 
 <script>
-var socket = new WebSocket("ws://217.154.36.84:6404");
-
-socket.onopen = function() {
-    console.log("Connected to server!");
-};
-
-socket.onmessage = function(event) {
-    var data = JSON.parse(event.data);
-
-    if (data.type === "counter") {
-        document.getElementById("counter").textContent = data.value;
-    }
-};
-
-socket.onerror = function(error) {
-    console.log("WebSocket error:", error);
-};
-
-socket.onclose = function() {
-    console.log("Disconnected from server.");
-};
-
-document.getElementById("increase").onclick = function() {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: "increase"
-        }));
-    }
-};
 
 var testSocket = new WebSocket("ws://217.154.36.84:6404");
 
