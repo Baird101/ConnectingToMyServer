@@ -40,6 +40,24 @@ document.getElementById("increase").onclick = function() {
         }));
     }
 };
+
+var testSocket = new WebSocket("ws://217.154.36.84:6404");
+
+testSocket.onopen = function() {
+    console.log("CONNECTED!");
+};
+
+testSocket.onmessage = function(event) {
+    console.log("SERVER:", event.data);
+};
+
+testSocket.onerror = function(error) {
+    console.log("ERROR:", error);
+};
+
+testSocket.onclose = function() {
+    console.log("CLOSED");
+};
 </script>
 
 </body>
