@@ -1,52 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ConnectingToMyServer</title>
+    <title>Relay</title>
 </head>
 
 <body>
 
-<h1>Server Counter</h1>
-
-<h2 id="counter">Connecting...</h2>
-
-<button id="increase">Increase</button>
-
 <script>
-var socket = new WebSocket(
-    "wss://toe-attitudes-copying-pee.trycloudflare.com"
-);
-    
-socket.onopen = function() {
-    console.log("WSS CONNECTED!");
-};
+var socket = null;
 
-socket.onmessage = function(event) {
-    console.log("SERVER:", event.data);
+var SERVER =
+    "wss://toe-attitudes-copying-pee.trycloudflare.com";
 
-    var data = JSON.parse(event.data);
+function connect() {
+    socket = new WebSocket(SERVER);
 
-    if (data.type === "counter") {
-        document.getElementById("counter").textContent =
-            data.value;
+    socket.onopen = function() {
+        console.log("SERVER CONNECTED");
+
+        window.opener.postMessage({
+            type: "relay_connected"
+        }, "*");
+    };
+
+    socket.onmessage = function(event) {
+        console.log("SERVER:", event.data);
+
+        window.opener.postMessage({
+            type: "server_message",
+            data: event.data
+        }, "*");
+    };
+
+    socket.onerror = function(error) {
+        console.log("SERVER ERROR");
+
+        window.opener.postMessage({
+            type: "relay_error"
+        }, "*");
+    };
+
+    socket.onclose = function() {
+        console.log("SERVER CLOSED");
+
+        window.opener.postMessage({
+            type: "relay_closed"
+        }, "*");
+    };
+}
+
+window.addEventListener("message", function(event) {
+    if (event.source !== window.opener) {
+        return;
     }
-};
 
-socket.onerror = function(error) {
-    console.log("WSS ERROR:", error);
-};
-
-socket.onclose = function() {
-    console.log("WSS CLOSED");
-};
-
-document.getElementById("increase").onclick = function() {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: "increase"
-        }));
+    if (event.data.type === "send") {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(event.data.data);
+        }
     }
-};
+});
+
+connect();
 </script>
 
 </body>
