@@ -2,15 +2,27 @@
 <html>
 <head>
     <title>Relay</title>
+    <style>
+        #warn {
+            font-weight: bold;
+            color: red;
+            font-size: 30px;
+        }
+        
+        #info {
+            color: black;
+            font-size: 20px;
+        }
+    </style>
 </head>
 
 <body>
-<h1>Leave this window open!</h1>
+<p id="warn">Please leave this window open!</p>
+<p id="info">It's what makes this work for multiplayer</p>
 <script>
 var socket = null;
 
-var SERVER =
-    "wss://toe-attitudes-copying-pee.trycloudflare.com";
+var SERVER = "wss://toe-attitudes-copying-pee.trycloudflare.com";
 
 function connect() {
     socket = new WebSocket(SERVER);
