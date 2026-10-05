@@ -10,23 +10,26 @@
 <button id="increase">Increase Counter</button>
 
 <script>
+var socket = new WebSocket(
+    "wss://valve-production-organisations-picking.trycloudflare.com"
+);
 
-var testSocket = new WebSocket("ws://217.154.36.84:6404");
+socket.onopen = function() {
+    console.log("WSS CONNECTED!");
 
-testSocket.onopen = function() {
-    console.log("CONNECTED!");
+    socket.send("Hello from GitHub Pages!");
 };
 
-testSocket.onmessage = function(event) {
+socket.onmessage = function(event) {
     console.log("SERVER:", event.data);
 };
 
-testSocket.onerror = function(error) {
-    console.log("ERROR:", error);
+socket.onerror = function(error) {
+    console.log("WSS ERROR:", error);
 };
 
-testSocket.onclose = function() {
-    console.log("CLOSED");
+socket.onclose = function() {
+    console.log("WSS CLOSED");
 };
 </script>
 
