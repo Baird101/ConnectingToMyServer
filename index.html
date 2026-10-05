@@ -1,61 +1,46 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebSocket Test</title>
+    <title>Counter Test</title>
 </head>
 
 <body>
-    <h1>WebSocket Test</h1>
 
-    <p id="status">Connecting...</p>
+<h1>Server Counter: <span id="counter">?</span></h1>
 
-    <button onclick="test()">Test Connection</button>
+<button id="increase">Increase Counter</button>
 
-    <pre id="output"></pre>
+<script>
+var socket = new WebSocket("ws://217.154.36.84:6404");
 
-    <script>
-        var socket = null;
-        
-        function connectToServer() {
-            socket = new WebSocket("wss://tester.wispbyte.org");
-        
-            socket.onopen = function() {
-                console.log("Connected to relay server!");
-        
-                socket.send(JSON.stringify({
-                    type: "join",
-                    room: "main"
-                }));
-            };
-        
-            socket.onmessage = function(event) {
-                var message = JSON.parse(event.data);
-        
-                console.log("Received:", message);
-        
-                if (message.type === "connected") {
-                    console.log("WebSocket connection established.");
-                }
-            };
-        
-            socket.onclose = function() {
-                console.log("Disconnected from relay server.");
-                socket = null;
-            };
-        
-            socket.onerror = function(error) {
-                console.log("WebSocket error:", error);
-            };
-        }
-        
-        function sendMessage(message) {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify(message));
-            }
-        }
-        
-        connectToServer();
-    </script>
+socket.onopen = function() {
+    console.log("Connected to server!");
+};
+
+socket.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+
+    if (data.type === "counter") {
+        document.getElementById("counter").textContent = data.value;
+    }
+};
+
+socket.onerror = function(error) {
+    console.log("WebSocket error:", error);
+};
+
+socket.onclose = function() {
+    console.log("Disconnected from server.");
+};
+
+document.getElementById("increase").onclick = function() {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: "increase"
+        }));
+    }
+};
+</script>
+
 </body>
 </html>
