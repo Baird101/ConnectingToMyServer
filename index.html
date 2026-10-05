@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Counter Test</title>
+    <title>ConnectingToMyServer</title>
 </head>
 
 <body>
 
+<h1>Server Counter</h1>
 
-<button id="increase">Increase Counter</button>
+<h2 id="counter">Connecting...</h2>
+
+<button id="increase">Increase</button>
 
 <script>
 var socket = new WebSocket(
@@ -16,12 +19,17 @@ var socket = new WebSocket(
 
 socket.onopen = function() {
     console.log("WSS CONNECTED!");
-
-    socket.send("Hello from GitHub Pages!");
 };
 
 socket.onmessage = function(event) {
     console.log("SERVER:", event.data);
+
+    var data = JSON.parse(event.data);
+
+    if (data.type === "counter") {
+        document.getElementById("counter").textContent =
+            data.value;
+    }
 };
 
 socket.onerror = function(error) {
@@ -30,6 +38,14 @@ socket.onerror = function(error) {
 
 socket.onclose = function() {
     console.log("WSS CLOSED");
+};
+
+document.getElementById("increase").onclick = function() {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: "increase"
+        }));
+    }
 };
 </script>
 
