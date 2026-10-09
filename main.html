@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>New Program.</title>
+
+<style>
+    html, body, #wrapper {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+    }
+
+    body {
+        background-color: black;
+    }
+
+    canvas {
+        width: fit-content;
+        height: fit-content;
+    }
+
+    #wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+
+</head>
+
+<body id="wrapper">
+
+<canvas class="sketch"></canvas>
+
+<script src="https://cdn.jsdelivr.net/gh/Khan/processing-js@master/processing.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/Mushy-Avocado/KA-exporter@v1.0.1/exporter.js"></script>
+
+<script>
+
+var ping = "--";
+var pingSent = 0;
+var pingTimer = null;
+
+var relayWindow = null;
+var relayReady = false;
+
+var RELAY_URL = "https://baird101.github.io/ConnectingToMyServer/index.html";
+
+var scene = 'connect';
+var Status = "Disconnected";
+var counter = "--";
+var mouseRelease = false;
+var username = "";
+var password = "";
+var loginMessage = "";
+var signupMessage = "";
+
+var rememberMe = localStorage.getItem("rememberMe") === "true";
+
+if (rememberMe) {
+    username = localStorage.getItem("username") || "";
+    password = localStorage.getItem("password") || "";
+}
+
+function saveLogin(name, pass) {
+    if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("username", name);
+        localStorage.setItem("password", pass);
+    } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("username");
+        localStorage.removeItem("password");
+    }
+}
+
+function sendPing() {
+    if (!relayReady) {
+        return;
+    }
+
+    pingSent = Date.now();
+
+    sendToServer({
+        type: "ping",
+        time: pingSent
+    });
+}
+
+
+function program() {
+    textAlign(CENTER, BASELINE);
+    rectMode(CENTER);
+    size(600, 600);
+
+
+    function button(x, y, w, h, labSize, label, doIt) {
+        if (mouseX >= x - w / 2 && mouseX <= x + w / 2 && mouseY >= y - h / 2 && mouseY <= y + h / 2) {
+            cursor(HAND);
+            fill(80, 80, 80);
+            
+            if (mouseRelease) {
+                doIt();
+            }
+        } else {
+            fill(50, 50, 50);
+        }
+
+        rect(x, y, w, h, 10);
+
+        fill(255);
+        textSize(labSize);
+        text(label, x, y + labSize / 3);
+    }
+    
+    
+    function input(config) {
+        for (var key in config) {
+            this[key] = config[key];
+        }
+        this.display = this.value;
+    };
+    
+    
+    input.prototype.detectMouse = function() {
+        if (mouseX >= this.x - this.w / 2 && mouseX <= this.x + this.w / 2 && mouseY >= this.y - this.h / 2 && mouseY <= this.y + this.h / 2) {
+            return true;
+        }
+        return false;
+    };
+    
+    
+    input.prototype.input = function() {
+        textSize(this.textSize_);
+        
+        if (keyRelease && this.active && textWidth(this.display) < this.w) {
+            if (keyCode === SHIFT || keyCode === ENTER) {
+                keyRelease = null;
+            } else if (keyCode === BACKSPACE) {
+                keyRelease = null;
+                
+                if (this.value.length > 0) {
+                    this.value = this.value.slice(0, -1);
+                }
+            } else {
+                this.value += keyRelease;
+            }
+        }
+    };
+    
+    
+    input.prototype.draw = function() {
+        if (this.detectMouse()) {
+            cursor(TEXT);
+            fill(40, 40, 40);
+    
+            if (mouseRelease) {
+                this.active = true;
+            }
+        } else {
+            if (mouseRelease) {
+                this.active = false;
+            }
+            
+            fill(30, 30, 30);
+        }
+    
+        rect(this.x, this.y, this.w, this.h, 10);
+    
+        fill(150);
+        textSize(16);
+        textAlign(LEFT, BASELINE);
+        text(this.label, this.x - this.w / 2 + 10, this.y - this.h / 1.5);
+    
+        fill(255);
+        textSize(this.textSize_);
+        
+        this.input();
+        
+        this.display = this.value;
+        
+        if (this.active) {
+            this.display += (frameCount % 40 < 20 ? '|' : '');
+        }
+        
+        text(this.display, this.x - this.w / 2 + 12, this.y + this.textSize_ / 3);
+    
+        textAlign(CENTER, BASELINE);
+    };
+    
+    
+    var Username = new input({
+        x: 300, 
+        y: 200, 
+        w: 300, 
+        h: 50, 
+        textSize_: 30, 
+        label: 'Username', 
+        value: username, 
+        active: false
+    });
+    
+    
+    var Password = new input({
+        x: 300, 
+        y: 300, 
+        w: 300, 
+        h: 50, 
+        textSize_: 30, 
+        label: 'Password', 
+        value: password, 
+        active: false
+    });
+    
+    
+    function login() {
+        console.log("USERNAME:", Username.value);
+        console.log("PASSWORD:", Password.value);
+    
+        saveLogin(Username.value, Password.value);
+    
+        var sent = sendToServer({
+            type: "login",
+            username: Username.value,
+            password: Password.value
+        });
+    
+        console.log("LOGIN SENT:", sent);
+    
+        if (!sent) {
+            loginMessage = "Not connected to server.";
+        }
+    }
+    
+    function signup() {
+        sendToServer({
+            type: "signup",
+            username: Username.value,
+            password: Password.value
+        });
+    }
+    
+    
+    mouseReleased = function() {
+        mouseRelease = true;
+    };
+    
+    
+    keyReleased = function() {
+        keyRelease = String.fromCharCode(key);
+    };
+
+
+    draw = function() {
+        cursor(ARROW);
+        background(20);
+        
+        fill(0, 255, 0);
+        textSize(18);
+        textAlign(LEFT, TOP);
+        text("Ping: " + ping + (ping === "--" ? "" : " ms"), 10, 10);
+        textAlign(CENTER, BASELINE);
+        
+        if (scene === 'connect') {
+            fill(255);
+            textSize(40);
+            text("Connect to server", 300, 180);
+    
+    
+            button(300, 280, 300, 70, 22, "Open Server Connection", function() {
+                openRelay();
+            });
+    
+    
+            fill(180);
+            textSize(22);
+            text(Status, 300, 400);
+        } 
+        
+        else if (scene === 'login') {
+            textSize(40);
+            fill(255);
+            text("Log in", 300, 100);
+        
+            Username.draw();
+            Password.draw();
+        
+        
+            // Remember me checkbox
+            if (rememberMe) {
+                fill(80, 180, 80);
+            } else {
+                fill(50, 50, 50);
+            }
+            
+            rect(220, 350, 25, 25);
+            
+            fill(255);
+            textAlign(LEFT, CENTER);
+            textSize(18);
+            text("Remember me", 240, 350);
+            textAlign(CENTER, BASELINE);
+            
+            
+            // Toggle remember me
+            if (mouseRelease &&
+                mouseX >= 207 &&
+                mouseX <= 233 &&
+                mouseY >= 337 &&
+                mouseY <= 363) {
+                
+                rememberMe = !rememberMe;
+                
+                if (!rememberMe) {
+                    localStorage.removeItem("rememberMe");
+                    localStorage.removeItem("username");
+                    localStorage.removeItem("password");
+                }
+            }
+        
+        
+            button(300, 420, 120, 60, 28, "Log in", function() {
+                login();
+            });
+        
+        
+            button(300, 500, 100, 35, 24, "Sign up", function() {
+                Username.value = "";
+                Password.value = "";
+                Username.active = false;
+                Password.active = false;
+                signupMessage = "";
+                scene = 'signup';
+            });
+        
+            fill(180);
+            textSize(18);
+            text(loginMessage, 300, 470);
+        } 
+        
+        else if (scene === 'signup') {
+            textSize(40);
+            fill(255);
+            text("Sign up", 300, 100);
+        
+            Username.draw();
+            Password.draw();
+            
+            if (Password.value.length < 6) {
+                fill(255, 0, 0);
+                textSize(20);
+                text("Too short password", 300, 370);
+            }
+        
+            button(300, 400, 140, 60, 28, "Sign up", function() {
+                signup();
+            });
+        
+            button(300, 500, 120, 40, 22, "Log in", function() {
+                loginMessage = "";
+                scene = 'login';
+            });
+        
+            fill(180);
+            textSize(18);
+            text(signupMessage, 300, 460);  
+        } 
+        
+        else if (scene === 'game') {
+            fill(255, 255, 255);
+            textSize(40);
+            text("Server Counter", 300, 150);
+    
+    
+            textSize(35);
+            text("Counter: " + counter, 300, 260);
+    
+    
+            button(300, 350, 200, 70, 22, "Increase", function() {
+                sendToServer({
+                    type: "increase"
+                });
+            });
+        }
+        
+        keyRelease = null;
+        mouseRelease = false;
+    };
+}
+
+
+function openRelay() {
+
+    relayWindow = window.open(
+        RELAY_URL,
+        "serverRelay",
+        "width=300,height=200"
+    );
+
+    if (!relayWindow) {
+        Status = "Popup blocked.";
+        return false;
+    }
+
+    Status = "Opening server connection...";
+
+    return true;
+}
+
+
+window.addEventListener("message", function(event) {
+
+    if (event.source !== relayWindow) {
+        return;
+    }
+
+
+    if (event.data.type === "relay_connected") {
+        relayReady = true;
+    
+        Status = "Connected to server!";
+    
+        scene = 'login';
+    
+        if (pingTimer) {
+            clearInterval(pingTimer);
+        }
+    
+        sendPing();
+    
+        pingTimer = setInterval(function() {
+            sendPing();
+        }, 1000);
+    }
+
+
+    if (event.data.type === "server_message") {
+    
+        var data = JSON.parse(event.data.data);
+    
+        //console.log("SERVER:", data);
+        
+        
+        if (data.type === "ping_result") {
+            ping = Date.now() - data.time;
+        }
+        
+    
+        if (data.type === "counter") {
+            counter = data.value;
+        }
+    
+        if (data.type === "login_result") {
+            loginMessage = data.message;
+    
+            if (data.success) {
+                username = data.username;
+                scene = 'game';
+            }
+        }
+    
+        if (data.type === "signup_result") {
+            signupMessage = data.message;
+    
+            if (data.success) {
+                loginMessage = "Account created! You can now log in.";
+                scene = 'login';
+            }
+        }
+    }
+
+    if (event.data.type === "relay_error") {
+        relayReady = false;
+        Status = "Server connection error.";
+    }
+
+
+    if (event.data.type === "relay_closed") {
+        relayReady = false;
+        Status = "Server disconnected.";
+    }
+
+});
+
+
+function sendToServer(data) {
+    //console.log("SEND TO SERVER:", data);
+
+    if (!relayWindow || relayWindow.closed) {
+        console.log("SEND FAILED: RELAY CLOSED");
+        return false;
+    }
+
+    if (!relayReady) {
+        console.log("SEND FAILED: RELAY NOT READY");
+        return false;
+    }
+
+    relayWindow.postMessage({
+        type: "send",
+        data: JSON.stringify(data)
+    }, "*");
+
+    return true;
+}
+
+
+runPJS(program);
+
+</script>
+
+</body>
+</html>
