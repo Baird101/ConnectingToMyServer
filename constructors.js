@@ -9,7 +9,9 @@ function Player(config) {
         this[key] = config[key];
     }
     
-    this.genImg();
+    if (typeof createGraphics === "function") {
+        this.genImg();
+    }
     
     this.ts = this.s;
     this.s = 1;
@@ -255,3 +257,10 @@ Food.prototype.run = function(){
         this.angOff = ang;
     }
 };
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+        Player: Player,
+        Food: Food
+    };
+}
