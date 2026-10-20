@@ -150,17 +150,17 @@ Player.prototype.move = function() {
     }
 };
 Player.prototype.display = function() {
-    // if (this.playerImg && this.nameImg) {
-    //     image(this.playerImg, this.x, this.y, this.s, this.s);
-    //     textSize(this.s / 3);
-    //     image(
-    //         this.nameImg,
-    //         this.x,
-    //         this.y - this.s / 2,
-    //         textWidth(this.name),
-    //         this.s / 3
-    //     );
-    // } else {
+    if (this.playerImg && this.nameImg) {
+        image(this.playerImg, this.x, this.y, this.s, this.s);
+        textSize(this.s / 3);
+        image(
+            this.nameImg,
+            this.x,
+            this.y - this.s / 2,
+            textWidth(this.name),
+            this.s / 3
+        );
+    } else {
         stroke(0, 0, 0, 150);
         strokeWeight(2);
         fill(this.col);
@@ -172,7 +172,7 @@ Player.prototype.display = function() {
         textSize(Math.max(10, this.s / 3));
         text(this.name || this.username || "Player",
             this.x, this.y - this.s / 2 - 10);
-    // }
+    }
 };
 Player.prototype.detectEat = function(array, mult) {
     for (var i = 0; i < array.length; i++) {
