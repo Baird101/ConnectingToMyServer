@@ -249,7 +249,7 @@ Food.prototype.move = function() {
     this.y += this.vy;
 
     var d = Math.sqrt(this.x * this.x + this.y * this.y);
-    var maxD = global.world.s / 2 - this.s / 2;
+    var maxD = world.s / 2 - this.s / 2;
 
     if (d > maxD) {
         var ang = Math.atan2(this.y, this.x);
