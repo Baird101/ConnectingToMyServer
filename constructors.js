@@ -161,17 +161,17 @@ Player.prototype.display = function() {
             this.s / 3
         );
     } else {
-        stroke(0, 0, 0, 150);
-        strokeWeight(2);
-        fill(this.col);
-        ellipse(this.x, this.y, this.s, this.s);
+        // stroke(0, 0, 0, 150);
+        // strokeWeight(2);
+        // fill(this.col);
+        // ellipse(this.x, this.y, this.s, this.s);
 
-        noStroke();
-        fill(255);
-        textAlign(CENTER, CENTER);
-        textSize(Math.max(10, this.s / 3));
-        text(this.name || this.username || "Player",
-            this.x, this.y - this.s / 2 - 10);
+        // noStroke();
+        // fill(255);
+        // textAlign(CENTER, CENTER);
+        // textSize(Math.max(10, this.s / 3));
+        // text(this.name || this.username || "Player",
+        //     this.x, this.y - this.s / 2 - 10);
     }
 };
 Player.prototype.detectEat = function(array, mult) {
