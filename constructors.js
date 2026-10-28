@@ -150,7 +150,10 @@ Player.prototype.move = function() {
     }
 };
 Player.prototype.display = function() {
+    fill(this.col);
     ellipse(this.x, this.y, 30, 30);
+
+    fill(255);
     text(this.name, this.x, this.y - this.s / 2);
 };
 Player.prototype.detectEat = function(array, mult) {
